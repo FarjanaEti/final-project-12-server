@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 require('dotenv').config()
 const port = process.env.PORT || 5000;
 
@@ -31,6 +32,14 @@ async function run() {
     const cartCollection = client.db("bistroDb").collection("cart");
 
 
+     // jwt related api
+     app.post('/jwt', async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+      console.log(process.env.ACCESS_TOKEN_SECRET)
+      res.send({ token });
+    })
+
      // users related api
       app.post('/users', async (req, res) => {
       const user = req.body;
@@ -59,6 +68,26 @@ async function run() {
      app.get('/review', async(req, res) =>{
         const result = await reviewCollection.find().toArray();
         res.send(result);
+    })
+
+    //make admin
+     app.patch('/users/admin/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          role: 'admin'
+        }
+      }
+      const result = await userCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    })
+    //delete user
+   app.delete('/users/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await userCollection.deleteOne(query);
+      res.send(result);
     })
 
 // *****************************
